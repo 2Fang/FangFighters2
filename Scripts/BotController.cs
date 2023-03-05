@@ -60,7 +60,7 @@ public class BotController : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if (!bot) return;
         for (int i = 0; i < noEnemies; i++)

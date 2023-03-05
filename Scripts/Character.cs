@@ -14,11 +14,13 @@ public class Character : MonoBehaviour
     BoxCollider2D collider;
     SpriteRenderer sprite;
     Circle circle;
+    Scores[] scores;
 
     bool bot;
     float invulnerability = 6f;
     int team = 1;
     bool started = false;
+    int bounty = 1;
 
 
     //variable between different characters
@@ -125,10 +127,11 @@ public class Character : MonoBehaviour
         aimbar.gameObject.SetActive(false);
         healthBar = GetComponentInChildren<HealthBar>();
         ammoBar = GetComponentInChildren<AmmoBar>();
+        scores = FindObjectsOfType<Scores>();
 
         for (int i = 0; i < projectiles.Length; i++)
         {
-            projectiles[i].GetComponent<Bullet>().SetProjectile(attackRange, attackSpeed, attackDamage, attackType);
+            projectiles[i].GetComponent<Bullet>().SetProjectile(attackRange, attackWidth, attackSpeed, attackDamage, attackType);
             projectiles[i].tag = "team" + team;
         }
 
@@ -138,18 +141,15 @@ public class Character : MonoBehaviour
         else
             bot = true;
 
-        print("STARTING");
-        //Respawn();
         invulnerable = 0;
         
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if (!started)
         {
-            //Die();
             started = true;
         }
         if (died)
@@ -188,9 +188,12 @@ public class Character : MonoBehaviour
             ammoBar.reSize(ammo / maxAmmo);
         }
 
+    }
+
+    void Update()
+    {
         if (!bot && active)
             Move();
-
     }
 
 
@@ -247,11 +250,11 @@ public class Character : MonoBehaviour
         ammo -= 1f;
         healCooldown = maxHealCooldown;
         attackCooldown = maxAttackCooldown;
-        projectiles[RotateAmmo()].GetComponent<Bullet>().Shoot(_rigidBody.position, angle);
+        projectiles[RotateAmmo()].GetComponent<Bullet>().Shoot(_rigidBody.position, angle, playerNum);
 
     }
 
-    public void GetHit(int damage)
+    public void GetHit(int damage, int shooter)
     {
         if (invulnerable > 0)
             return;
@@ -260,6 +263,11 @@ public class Character : MonoBehaviour
         if (health <= 0)
         {
             health = 0;
+            foreach (Scores score in scores)
+            {
+                score.updateScore(shooter, bounty);
+            }
+            bounty = 2;
             Die();
         }
         healthBar.reSize(health / maxHealth);
@@ -275,6 +283,12 @@ public class Character : MonoBehaviour
         }
         return 0;
 
+    }
+
+    public void raiseBounty()
+    {
+        if (bounty < 6)
+            bounty++;
     }
 
     public Vector2 getPos()
@@ -300,6 +314,40 @@ public class Character : MonoBehaviour
 
     }
 
+    public float[] GatherInfo(Character character)
+    {
+        float[] playerInfo = new float[16];
+        if (character.playerNum == playerNum)
+        {
+            playerInfo[0] = _rigidBody.position.x / 10;
+            playerInfo[1] = _rigidBody.position.y / 5;
+        }
+        else
+        {
+            playerInfo[0] = (_rigidBody.position.x - character.getPos().x) / 10;
+            playerInfo[1] = (_rigidBody.position.y - character.getPos().y) / 5;
+        }
+        playerInfo[2] = health / 10000;
+        playerInfo[3] = maxHealth / 10000;
+        playerInfo[4] = ammo / 10;
+        playerInfo[5] = reloadSpeed * 100;
+        playerInfo[6] = attackSpeed / 10;
+        playerInfo[7] = maxAttackCooldown;
+        playerInfo[8] = attackDamage / 10000;
+        playerInfo[9] = attackRange / 20;
+        playerInfo[10] = attackWidth / 2.5f;
+        playerInfo[11] = attackType / 3;
+        playerInfo[12] = movementSpeed / 5;
+        playerInfo[13] = died ? 1 : 0;
+        playerInfo[14] = (invulnerable > 0) ? 1 : 0;
+        playerInfo[15] = bounty;
+
+
+
+
+        return playerInfo;
+    }
+
     void Respawn()
     {
         died = false;
@@ -307,15 +355,11 @@ public class Character : MonoBehaviour
         health = maxHealth;
         ammo = maxAmmo;
         healthBar.reSize(health / maxHealth);
-        print("RESPAWNING");
-        print(playerNum);
-        print(spawnPoints[0]);
         _rigidBody.position = spawnPoints[(int)(Random.value * spawnPoints.Length)];
     }
 
     public void RespawnPos(Vector2[] positions1, Vector2[] positions2)
     {
-        print("SETTING SPAWN OF " + playerNum);
         if (team == 0)
         {
             spawnPoints = new Vector2[] { new Vector2(15, 15) };
@@ -328,7 +372,6 @@ public class Character : MonoBehaviour
         {
             spawnPoints = positions2;
         }
-        print(spawnPoints[0]);
         Respawn();
     }
 
@@ -439,7 +482,7 @@ public class Character : MonoBehaviour
         maxAmmo = 3;
         maxAttackCooldown = 0.4f;
         reloadSpeed = 0.8f;
-        attackDamage = 1600;
+        attackDamage = 3200;
         attackCooldown = 0;
         maxHealCooldown = 3;
         attackType = 0;

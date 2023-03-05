@@ -10,21 +10,26 @@ public class Bullet : MonoBehaviour
     float speed;
     [SerializeField] float offset;
     float range;
+    float width;
     Vector2 startPoint;
     Vector2 endPoint;
     float time;
+    int shooter;
+    Vector3 scale;
     
     PolygonCollider2D polyCollider;
     Rigidbody2D bullet;
 
 
 
-    public void SetProjectile(int _range, int _speed, int _damage, int _attackType)
+    public void SetProjectile(int _range, float _width, int _speed, int _damage, int _attackType)
     {
         range = _range;
+        width = _width;
         speed = _speed;
         damage = _damage;
         attackType = _attackType;
+        //bullet.transform.localScale = new Vector3(scale.x * width, scale.y, scale.z);
     }
 
     // Start is called before the first frame update
@@ -32,17 +37,13 @@ public class Bullet : MonoBehaviour
     {
         polyCollider = GetComponent<PolygonCollider2D>();
         bullet = GetComponent<Rigidbody2D>();
+        scale = bullet.transform.localScale;
         gameObject.SetActive(false);
     }
 
     // Update is called once per frame
-    void Update()
-    {/*
-        if (bullet.position == endPoint)
-        {
-            EndProjectile();
-        }
-        */
+    void FixedUpdate()
+    {
         if (time > 0)
         {
             time -= Time.deltaTime;
@@ -60,15 +61,16 @@ public class Bullet : MonoBehaviour
         if (collision.tag == "Fence") return;
         try
         {
-            collision.GetComponent<Character>().GetHit(damage);
+            collision.GetComponent<Character>().GetHit(damage, shooter);
         }
         catch { };
         polyCollider.enabled = false;
         EndProjectile();
     }
 
-    public void Shoot(Vector2 position, Vector2 direction)
+    public void Shoot(Vector2 position, Vector2 direction, int player)
     {
+        shooter = player;
         gameObject.SetActive(true);
         polyCollider.enabled = true;
         direction = direction.normalized;

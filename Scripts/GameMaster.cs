@@ -10,7 +10,7 @@ public class GameMaster : MonoBehaviour
     float startTimer = 1;
     float endTimer;
     Timer timeText;
-    BotController[] playersA;
+    AIController[] playersA;
     Character[] playersB;
     [SerializeField] LobbySO lobbySelection;
     [SerializeField] Vector2[] spawnPoints1;
@@ -20,12 +20,12 @@ public class GameMaster : MonoBehaviour
     void Start()
     {
         timeText = FindObjectOfType<Timer>();
-        playersA = FindObjectsOfType<BotController>();
+        playersA = FindObjectsOfType<AIController>();
         playersB = FindObjectsOfType<Character>();
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if (startTimer > 0)
         {

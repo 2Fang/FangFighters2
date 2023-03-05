@@ -12,13 +12,13 @@ public class Fireball : MonoBehaviour
     private BoxCollider2D boxCollider;
     private Character character;
 
-    private void Awake()
+    void Awake()
     {
         anim = GetComponent<Animator>();
         boxCollider = GetComponent<BoxCollider2D>();
         character = GetComponent<Character>();
     }
-    private void Update()
+    void FixedUpdate()
     {
         if (hit) return;
         float movementSpeed = speed * Time.deltaTime * direction;
@@ -27,14 +27,14 @@ public class Fireball : MonoBehaviour
         lifetime += Time.deltaTime;
         if (lifetime > time) Deactivate();
     }
-    private void OnTriggerEnter2D(Collider2D collision)
+    void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.tag == "team 1") return;
         hit = true;
         boxCollider.enabled = false;
         anim.SetTrigger("explode");
     }
-    public void SetDirection(float _direction)
+    void SetDirection(float _direction)
     {
         lifetime = 0;
         direction = _direction;
@@ -48,7 +48,7 @@ public class Fireball : MonoBehaviour
 
         transform.localScale = new Vector3(localScaleX, transform.localScale.y, transform.localScale.z);
     }
-    private void Deactivate()
+    void Deactivate()
     {
         gameObject.SetActive(false);
     }

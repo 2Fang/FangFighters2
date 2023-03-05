@@ -24,7 +24,7 @@ public class LobbyMaster : MonoBehaviour
     GameObject[] podiums = new GameObject[4];
     SpriteRenderer[] podiumStates = new SpriteRenderer[4];
     public Sprite[] podiumSpriteSheet;
-    int[] podiumSkins = { 1, 1, 2, 2 };
+    int[] podiumSkins = { 0, 0, 0, 0 };
 
     int[] playersInLobby = new int[4];
     int[] botsInLobby = new int[4];
@@ -98,11 +98,13 @@ public class LobbyMaster : MonoBehaviour
         {
             if (playersInLobby[playerNo] == 0) // if player not in lobby add them to lobby
             {
+                print("player " + playerNo + "joined");
                 playersInLobby[playerNo] = 1;
                 botsInLobby[playerNo] = 0;
                 pIcons[playerNo].SetActive(true);
                 characterPreviews[playerNo].SetActive(true);
                 pIconSprites[playerNo].sprite = pIconSpriteSheet[playerNo];
+                podiumSkins[playerNo] = 1;
                 podiumStates[playerNo].sprite = podiumSpriteSheet[podiumSkins[playerNo]];
                 playerSelections[playerNo] = 0;
             }

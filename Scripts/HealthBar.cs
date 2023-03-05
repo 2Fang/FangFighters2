@@ -23,7 +23,7 @@ public class HealthBar : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         _rigidBody.position = player.getPos() + offset;
 
