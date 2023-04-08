@@ -7,7 +7,7 @@ public class Aim : MonoBehaviour
 
     Rigidbody2D aimBar;
 
-    [SerializeField] int playerNo;
+    [SerializeField] int playerNum;
 
     string RS_h;
     string RS_v;
@@ -20,9 +20,6 @@ public class Aim : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        RS_h = "RS_h" + playerNo;
-        RS_v = "RS_v" + playerNo;
-        RS_B = "RS_B" + playerNo;
         aimBar = GetComponent<Rigidbody2D>();
     }
 
@@ -46,6 +43,14 @@ public class Aim : MonoBehaviour
     public void ChangeAimBar(Vector3 resize)
     {
         gameObject.transform.localScale = resize;
+    }
+
+    public void setPlayerNum(int num)
+    {
+        playerNum = num;
+        RS_v = "RS_v" + playerNum;
+        RS_B = "RS_B" + playerNum;
+        RS_h = "RS_h" + playerNum;
     }
 
 }

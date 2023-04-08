@@ -6,12 +6,17 @@ public class NetworkInitialiser : MonoBehaviour
 {
 
     [SerializeField] NetworkSO neuralNetworkSO;
+    [SerializeField] bool restartWeights;
+    float glorot;
     // Start is called before the first frame update
     void Awake()
     {
-        NeuralNetwork network = new NeuralNetwork(new int[] { 64, 100, 100, 5 });
+        NeuralNetwork network = new NeuralNetwork(new int[] { 68, 50, 5 });
         neuralNetworkSO.Layers = network.getLayers();
         neuralNetworkSO.Neurons = network.getNeurons();
+        glorot = Mathf.Sqrt(6f / (neuralNetworkSO.Layers[0] + neuralNetworkSO.Layers[neuralNetworkSO.Layers.Length - 1]));
+        //glorot = 1;
+        print(glorot);
         float[][][][] randomweights = new float[neuralNetworkSO.GeneSample][][][];
         int noWeights = network.InitWeights();
         randomweights[0] = network.getWeights();
@@ -22,7 +27,24 @@ public class NetworkInitialiser : MonoBehaviour
             randomweights[i] = network.getWeights();
         }
         neuralNetworkSO.WeightTemplate = randomweights;
-        //neuralNetworkSO.Weights = randomweights;
+        if (restartWeights)
+        {
+            neuralNetworkSO.Weights = randomweights;
+            float[][] feedback = new float[neuralNetworkSO.GeneSample][];
+            for (int i = 0; i < neuralNetworkSO.GeneSample; i++)
+            {
+                feedback[i] = new float[neuralNetworkSO.Layers[1]];
+            }
+            neuralNetworkSO.Feedback = feedback;
+            for (int i = 0; i < neuralNetworkSO.GeneSample; i++)
+            {
+                for (int j = 0; j < neuralNetworkSO.Layers[1]; j++)
+                {
+                    feedback[i][j] = glorot * Random.value;
+                }
+            }
+            neuralNetworkSO.FeedbackWeights = feedback;
+        }
 
     }
 
@@ -34,7 +56,7 @@ public class NetworkInitialiser : MonoBehaviour
 
     public void initialiseNeuralNetwork()
     {
-        NeuralNetwork network = new NeuralNetwork(new int[] { 4, 8, 8, 2});
+        NeuralNetwork network = new NeuralNetwork(new int[] { 68, 50, 5 });
         neuralNetworkSO.Layers = network.getLayers();
         neuralNetworkSO.Neurons = network.getNeurons();
         float[][][][] randomweights = new float[neuralNetworkSO.GeneSample][][][];

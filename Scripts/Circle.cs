@@ -8,7 +8,7 @@ public class Circle : MonoBehaviour
 
     SpriteRenderer circle;
 
-    void Start()
+    void Awake()
     {
         circle = GetComponent<SpriteRenderer>();
     }

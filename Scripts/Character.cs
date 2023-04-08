@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Character : MonoBehaviour
 {
@@ -15,6 +14,12 @@ public class Character : MonoBehaviour
     SpriteRenderer sprite;
     Circle circle;
     Scores[] scores;
+
+    int[] kills = new int[4];
+    int[] damageDealt = new int[4];
+    int deaths;
+    float centreControl;
+    float controlTimer = 1;
 
     bool bot;
     float invulnerability = 6f;
@@ -43,7 +48,7 @@ public class Character : MonoBehaviour
 
     [SerializeField] int playerNum;
 
-    string LS_h = "LS_h";
+    [SerializeField] string LS_h = "LS_h";
     string LS_v = "LS_v";
     string LS_B = "LS_B";
     string RS_h = "RS_h";
@@ -115,14 +120,7 @@ public class Character : MonoBehaviour
         ogColor = sprite.color;
 
         ChangeCharacter();
-
-        foreach (Aim bar in FindObjectsOfType<Aim>())
-        {
-            if (bar.CheckButton(RS_B))
-            {
-                aimbar = bar;
-            }
-        }
+        aimbar = GetComponentInChildren<Aim>();
         aimbar.ChangeAimBar(new Vector3(attackRange * 2f, attackWidth, 1));
         aimbar.gameObject.SetActive(false);
         healthBar = GetComponentInChildren<HealthBar>();
@@ -142,7 +140,7 @@ public class Character : MonoBehaviour
             bot = true;
 
         invulnerable = 0;
-        
+
     }
 
     // Update is called once per frame
@@ -157,6 +155,15 @@ public class Character : MonoBehaviour
         if (invulnerable > 0)
             Invulnerable();
 
+        if (controlTimer > 0)
+        {
+            controlTimer -= Time.deltaTime;
+            if (controlTimer <= 0)
+            {
+                controlTimer = 1;
+                centreControl += Mathf.Sqrt(Mathf.Pow(_rigidBody.position.x, 2) + Mathf.Pow(_rigidBody.position.y, 2));
+            }
+        }
 
         if (attackCooldown > 0)
         {
@@ -262,7 +269,10 @@ public class Character : MonoBehaviour
         healCooldown = maxHealCooldown;
         if (health <= 0)
         {
+            damageDealt[shooter - 1] += (int)health + damage;
             health = 0;
+            kills[shooter - 1] += bounty;
+            deaths += bounty;
             foreach (Scores score in scores)
             {
                 score.updateScore(shooter, bounty);
@@ -270,6 +280,8 @@ public class Character : MonoBehaviour
             bounty = 2;
             Die();
         }
+        else
+            damageDealt[shooter - 1] += damage;
         healthBar.reSize(health / maxHealth);
     }
 
@@ -306,6 +318,15 @@ public class Character : MonoBehaviour
         return playerNum;
     }
 
+    public int[][] getScores()
+    {
+        return new int[][] { kills, damageDealt, new int[] { deaths }, new int[] { (int)centreControl } };
+    }
+
+    public void setPlayerNum(int num)
+    {
+        playerNum = num;
+    }
 
     public void Die()
     {
@@ -316,7 +337,7 @@ public class Character : MonoBehaviour
 
     public float[] GatherInfo(Character character)
     {
-        float[] playerInfo = new float[16];
+        float[] playerInfo = new float[12];
         if (character.playerNum == playerNum)
         {
             playerInfo[0] = _rigidBody.position.x / 10;
@@ -330,20 +351,13 @@ public class Character : MonoBehaviour
         playerInfo[2] = health / 10000;
         playerInfo[3] = maxHealth / 10000;
         playerInfo[4] = ammo / 10;
-        playerInfo[5] = reloadSpeed * 100;
-        playerInfo[6] = attackSpeed / 10;
-        playerInfo[7] = maxAttackCooldown;
-        playerInfo[8] = attackDamage / 10000;
-        playerInfo[9] = attackRange / 20;
-        playerInfo[10] = attackWidth / 2.5f;
-        playerInfo[11] = attackType / 3;
-        playerInfo[12] = movementSpeed / 5;
-        playerInfo[13] = died ? 1 : 0;
-        playerInfo[14] = (invulnerable > 0) ? 1 : 0;
-        playerInfo[15] = bounty;
-
-
-
+        playerInfo[5] = attackDamage / 10000;
+        playerInfo[6] = attackRange / 20;
+        playerInfo[7] = attackType;
+        playerInfo[8] = movementSpeed / 5;
+        playerInfo[9] = died ? -1 : ((invulnerability > 0) ? 0 : 1);
+        playerInfo[10] = bounty;
+        playerInfo[11] = (team == 1) ? 1 : -1;
 
         return playerInfo;
     }
@@ -422,7 +436,6 @@ public class Character : MonoBehaviour
     {
         int i = lobbySelection.Selections[playerNum - 1];
         team = lobbySelection.Team[playerNum - 1];
-        gameObject.tag = "team" + team;
         if (team > 0)
             circle.changeColour(teamColours[team - 1]);
         if (i == 4)
@@ -435,7 +448,7 @@ public class Character : MonoBehaviour
             Dinosaur();
         else if (i == 3)
             Kangaroo();
-        
+
     }
 
 
@@ -468,7 +481,7 @@ public class Character : MonoBehaviour
         attackDamage = 2000;
         attackCooldown = 0;
         maxHealCooldown = 3;
-        attackType = 0;
+        attackType = 1;
     }
 
     private void PurpleDragon()
@@ -485,7 +498,7 @@ public class Character : MonoBehaviour
         attackDamage = 3200;
         attackCooldown = 0;
         maxHealCooldown = 3;
-        attackType = 0;
+        attackType = 1;
     }
 
     private void Dinosaur()
@@ -502,7 +515,7 @@ public class Character : MonoBehaviour
         attackDamage = 3000;
         attackCooldown = 0;
         maxHealCooldown = 3;
-        attackType = 0;
+        attackType = 1;
     }
 
     private void Kangaroo()
@@ -524,4 +537,3 @@ public class Character : MonoBehaviour
 
 
 }
-

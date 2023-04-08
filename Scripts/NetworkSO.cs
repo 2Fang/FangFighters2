@@ -13,10 +13,19 @@ public class NetworkSO : ScriptableObject
     float[][][][] weightTemplate;
     [SerializeField] float[] flattenedWeights;
     [SerializeField] int noWeights;
+    [SerializeField] float[] flattenedFeedback;
+    [SerializeField] float[] feedbackWeights;
 
     [SerializeField] int geneSample;
     [SerializeField] int[] scores;
+    [SerializeField] int genNo;
 
+
+    public int GenNo
+    {
+        get { return genNo; }
+        set { genNo = value; }
+    }
 
     public int GeneSample
     {
@@ -25,6 +34,7 @@ public class NetworkSO : ScriptableObject
 
     public int NoWeights
     {
+        get { return noWeights; }
         set { noWeights = value; }
     }
 
@@ -142,6 +152,72 @@ public class NetworkSO : ScriptableObject
                             dataIndex++;
                         }
                     }
+                }
+            }
+        }
+    }
+
+    public float[][] Feedback
+    {
+        get
+        {
+            //create staggered array from flattened data
+            float[][] result = new float[geneSample][];
+            int dataIndex = 0;
+            for (int i = 0; i < geneSample; i++)
+            {
+                result[i] = new float[layers[1]];
+                for (int j = 0; j < layers[1]; j++)
+                {
+                    result[i][j] = flattenedFeedback[dataIndex];
+                    dataIndex++;
+                }
+            }
+            return result;
+        }
+        set
+        {
+            flattenedFeedback = new float[value.Length * value[0].Length];
+            int dataIndex = 0;
+            for (int i = 0; i < value.Length; i++)
+            {
+                for (int j = 0; j < value[i].Length; j++)
+                {
+                    flattenedFeedback[dataIndex] = value[i][j];
+                    dataIndex++;
+                }
+            }
+        }
+    }
+
+    public float[][] FeedbackWeights
+    {
+        get
+        {
+            //create staggered array from flattened data
+            float[][] result = new float[geneSample][];
+            int dataIndex = 0;
+            for (int i = 0; i < geneSample; i++)
+            {
+                result[i] = new float[layers[1]];
+                for (int j = 0; j < layers[1]; j++)
+                {
+                    result[i][j] = feedbackWeights[dataIndex];
+                    dataIndex++;
+                }
+            }
+            return result;
+        }
+        set
+        {
+            feedbackWeights = new float[value.Length * value[0].Length];
+            int dataIndex = 0;
+            for (int i = 0; i < value.Length; i++)
+            {
+                for (int j = 0; j < value[i].Length; j++)
+                {
+                    feedbackWeights[dataIndex] = value[i][j];
+                    dataIndex++;
                 }
             }
         }

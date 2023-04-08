@@ -7,13 +7,15 @@ public class NeuralNetwork
     private int[] layers;
     private float[][] neurons;
     private float[][][] weights;
+    float glorot;
 
     public NeuralNetwork(int[] _layers)
     {
         layers = new int[_layers.Length];
         for (int i = 0; i < _layers.Length; i++)
             layers[i] = _layers[i];
-
+        glorot = Mathf.Sqrt(6f / (layers[0] + layers[layers.Length - 1]));
+        //glorot = 1f;
         InitNeurons();
         InitWeights();
     }
@@ -44,10 +46,10 @@ public class NeuralNetwork
             {
                 float[] neuronWeights = new float[neuronsInPreviousLayer];
 
-                //set weights randomly from -1 to 1
+                //set weights randomly from -He to He
                 for (int k = 0; k < neuronsInPreviousLayer; k++)
                 {
-                    neuronWeights[k] = UnityEngine.Random.value * 2 - 1;
+                    neuronWeights[k] = UnityEngine.Random.Range(-glorot, glorot);
                     noWeights++;
                 }
 

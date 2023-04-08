@@ -16,6 +16,7 @@ public class Bullet : MonoBehaviour
     float time;
     int shooter;
     Vector3 scale;
+    int z;
     
     PolygonCollider2D polyCollider;
     Rigidbody2D bullet;
@@ -58,7 +59,9 @@ public class Bullet : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.tag == gameObject.tag) return;
+        if (collision.transform.position.z != z) return;
         if (collision.tag == "Fence") return;
+        if (collision.tag == "Wall" && attackType == -1) return;
         try
         {
             collision.GetComponent<Character>().GetHit(damage, shooter);
@@ -85,6 +88,26 @@ public class Bullet : MonoBehaviour
         //endPoint = startPoint + direction * range;
         time = range / speed;
 
+    }
+
+    public void setZ(int _z)
+    {
+        z = _z;
+    }
+
+    public int getZ()
+    {
+        return z;
+    }
+
+    public Vector2 getVel()
+    {
+        return bullet.velocity;
+    }
+
+    public int getShooter()
+    {
+        return shooter;
     }
 
     void EndProjectile()
