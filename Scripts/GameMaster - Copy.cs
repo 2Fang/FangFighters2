@@ -4,7 +4,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameMaster : MonoBehaviour
+public class GameMasters : MonoBehaviour
 {
 
     float[][][] walls = new float[][][]
@@ -89,10 +89,10 @@ public class GameMaster : MonoBehaviour
             trainingNetworkSO.Weights = ReadWeightsFromFile("/weights " + trainingLevel);
             trainingNetworkSO.FeedbackWeights = ReadFeedbackFromFile("/feedback " + trainingLevel);
         }
-        playersA = new BotController[lobbySelection.BatchSize][];
-        playersB = new Character[lobbySelection.BatchSize][];
-        glorot = 2 * Mathf.Sqrt(6f / (neuralNetworkSO.Layers[0] + neuralNetworkSO.Layers[neuralNetworkSO.Layers.Length - 1]));
-        for (int j = 0; j < lobbySelection.BatchSize; j++)
+        playersA = new BotController[neuralNetworkSO.GeneSample][];
+        playersB = new Character[neuralNetworkSO.GeneSample][];
+        glorot = 2 * Mathf.Sqrt(6 / (neuralNetworkSO.Layers[0] + neuralNetworkSO.Layers[neuralNetworkSO.Layers.Length - 1]));
+        for (int j = 0; j < neuralNetworkSO.GeneSample; j++)
         {
             playersA[j] = new BotController[4];
             playersB[j] = new Character[4];
@@ -105,7 +105,6 @@ public class GameMaster : MonoBehaviour
                 playersB[j][i] = players[i].GetComponent<Character>();
                 playersA[j][i].setPlayerNum(i + 1);
                 playersB[j][i].setPlayerNum(i + 1);
-                playersA[j][i].setSampleNo(lobbySelection.BatchNo * lobbySelection.BatchSize + j);
                 aimbars[i] = new Aim[2];
                 foreach (Aim aimbar in players[i].GetComponentsInChildren<Aim>())
                 {
@@ -266,38 +265,28 @@ public class GameMaster : MonoBehaviour
         if (mode == "Training")
         {
             AddScores();
-            if (lobbySelection.BatchNo == (neuralNetworkSO.GeneSample / lobbySelection.BatchSize) - 1)
+            int temp = lobbySelection.BotModes[0];
+            for (int i = 0; i < 3; i++)
             {
-                int temp = lobbySelection.BotModes[0];
-                for (int i = 0; i < 3; i++)
-                {
-                    lobbySelection.BotModes[i] = lobbySelection.BotModes[i + 1];
-                    lobbySelection.Selections[i] = (int)(Random.value * 4);
-                }
-                lobbySelection.BotModes[3] = temp;
-                lobbySelection.TrialNo++;
-                if (lobbySelection.TrialNo >= trials - 1)
-                {
-                    neuralNetworkSO.GenNo++;
-                    TrainNetwork();
-                    if (neuralNetworkSO.GenNo % 100 == 0)
-                    {
-                        WriteWeightsToFile(neuralNetworkSO.Weights, "\\weights " + neuralNetworkSO.GenNo / 100);
-                        WriteFeedbackToFile(neuralNetworkSO.FeedbackWeights, "\\feedback " + neuralNetworkSO.GenNo / 100);
-
-                        trainingNetworkSO.Weights = ReadWeightsFromFile("\\weights " + neuralNetworkSO.GenNo / 100);
-                        trainingNetworkSO.FeedbackWeights = ReadFeedbackFromFile("\\feedback " + neuralNetworkSO.GenNo / 100);
-                    }
-
-                    if (neuralNetworkSO.GenNo == 260)
-                    {
-                        WriteWeightsToFile(neuralNetworkSO.Weights, "\\weights 260");
-                        WriteFeedbackToFile(neuralNetworkSO.FeedbackWeights, "\\feedback 260");
-                    }
-                        lobbySelection.TrialNo = 0;
-                }
+                lobbySelection.BotModes[i] = lobbySelection.BotModes[i + 1];
+                lobbySelection.Selections[i] = (int)(Random.value * 4);
             }
-            lobbySelection.BatchNo = (lobbySelection.BatchNo + 1) % (neuralNetworkSO.GeneSample / lobbySelection.BatchSize);
+            lobbySelection.BotModes[3] = temp;
+            lobbySelection.TrialNo++;
+            if (lobbySelection.TrialNo >= trials)
+            {
+                neuralNetworkSO.GenNo++;
+                TrainNetwork();
+                if (neuralNetworkSO.GenNo % 100 == 0)
+                {
+                    WriteWeightsToFile(neuralNetworkSO.Weights, "\\weights " + neuralNetworkSO.GenNo / 100);
+                    WriteFeedbackToFile(neuralNetworkSO.FeedbackWeights, "\\feedback " + neuralNetworkSO.GenNo / 100);
+
+                    trainingNetworkSO.Weights = ReadWeightsFromFile("weights " + neuralNetworkSO.GenNo / 100);
+                    trainingNetworkSO.FeedbackWeights = ReadFeedbackFromFile("feedback " + neuralNetworkSO.GenNo / 100);
+                }
+                lobbySelection.TrialNo = 0;
+            }
             SceneManager.LoadScene("Battle - Copy");
         }
     }
@@ -306,7 +295,7 @@ public class GameMaster : MonoBehaviour
     void AddScores()
     {
         int[][] scores;
-        for (int j = 0; j < lobbySelection.BatchSize; j++)
+        for (int j = 0; j < neuralNetworkSO.GeneSample; j++)
         {
             int[][] scoreSum = new int[][] { new int[4], new int[4], new int[4], new int[4] };
             for (int i = 0; i < 4; i++)
@@ -327,7 +316,7 @@ public class GameMaster : MonoBehaviour
             {
                 if (lobbySelection.BotModes[i] != 0)
                 {
-                    neuralNetworkSO.Scores[lobbySelection.BatchSize * lobbySelection.BatchNo + j] += 1000 * scoreSum[0][i] + 1 * scoreSum[1][i] - 500 * scoreSum[2][i] - (int)(0.5 * scoreSum[3][i] * scoreSum[3][i] - 60 * scoreSum[3][i] + 2000);
+                    neuralNetworkSO.Scores[j] += 10000 * scoreSum[0][i] + 1 * scoreSum[1][i] - 100 * scoreSum[2][i] - 100 * scoreSum[3][i];
                     print("player " + (i + 1) + "'s stats: " + scoreSum[0][i] + " KILLS, " + scoreSum[1][i] + " DAMAGE DEALT, " + scoreSum[2][i] + " DEATHS, " + scoreSum[3][i] + " AREA COVERAGE");
                     //print("player " + (i + 1) + "'s AREA COVERAGE: " + scoreSum[3][i]);
                 }
@@ -409,7 +398,7 @@ public class GameMaster : MonoBehaviour
         {
             for (int x = 0; x < newFeedback[i].Length; x++)
             {
-                newFeedback[i + top10percent][x] = oldFeedback[networkIndexes[i]][x] + (Mathf.Abs(oldFeedback[networkIndexes[i]][x]) + 0.1f) * Random.Range(-0.1f, 0.1f);
+                newFeedback[i + top10percent][x] = oldFeedback[networkIndexes[i]][x] * Random.Range(0.9f, 1.1f);
             }
             for (int j = 0; j < newWeights[i].Length; j++)
             {
@@ -417,7 +406,7 @@ public class GameMaster : MonoBehaviour
                 {
                     for (int l = 0; l < newWeights[i][j][k].Length; l++)
                     {
-                        newWeights[i + top10percent][j][k][l] = oldWeights[networkIndexes[i]][j][k][l] + (Mathf.Abs(oldWeights[networkIndexes[i]][j][k][l]) + 0.1f) * Random.Range(-0.1f, 0.1f);
+                        newWeights[i + top10percent][j][k][l] = oldWeights[networkIndexes[i]][j][k][l] * Random.Range(0.9f, 1.1f);
                     }
                 }
             }
@@ -491,7 +480,7 @@ public class GameMaster : MonoBehaviour
             int count = 0;
             for (int x = 0; x < newFeedback[networkIndexes[i]].Length; x++)
             {
-                newFeedback[i][x] = oldFeedback[networkIndexes[parents[parent]]][x] + (Mathf.Abs(oldFeedback[networkIndexes[parents[parent]]][x]) + 0.1f) * Random.Range(-0.1f, 0.1f);
+                newFeedback[i][x] = oldFeedback[networkIndexes[parents[parent]]][x] * Random.Range(0.9f, 1.1f);
                 if (count == crossover1)
                     parent = 1;
                 else
@@ -505,7 +494,7 @@ public class GameMaster : MonoBehaviour
                 {
                     for (int l = 0; l < newWeights[i][j][k].Length; l++)
                     {
-                        newWeights[i][j][k][l] = oldWeights[networkIndexes[parents[parent]]][j][k][l] + (Mathf.Abs(oldWeights[networkIndexes[parents[parent]]][j][k][l]) + 0.1f) * Random.Range(-0.1f, 0.1f);
+                        newWeights[i][j][k][l] = oldWeights[networkIndexes[parents[parent]]][j][k][l] * Random.Range(0.9f, 1.1f);
                         if (count == crossover2)
                             parent = 1;
                         else

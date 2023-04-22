@@ -10,7 +10,6 @@ public class Character : MonoBehaviour
     [SerializeField] Color[] teamColours;
 
     Rigidbody2D _rigidBody;
-    BoxCollider2D collider;
     SpriteRenderer sprite;
     Circle circle;
     Scores[] scores;
@@ -26,20 +25,33 @@ public class Character : MonoBehaviour
     int team = 1;
     bool started = false;
     int bounty = 1;
+    float respawnTimer;
 
 
     //variable between different characters
     int movementSpeed = 3;
     float maxHealth = 4200;
-    int attackRange = 5;
+    float attackRange = 5;
     float attackWidth = 1f;
-    int attackSpeed = 6;
+    float attackLength = 1f;
+    float attackSpeed = 6;
     float health;
     float maxAmmo = 3;
     float maxAttackCooldown = 50;
     float reloadSpeed = 0.004f;
     int attackDamage = 2400;
+    int numProjectiles = 1;
+    bool ghost;
+    bool splash;
+    float superChargeRate;
+    float attackLinger;
+    float burst;
+    bool followThrough;
+    float offset;
 
+    int bulletsToShoot;
+    Vector2 angle;
+    float burstTimer;
     float ammo;
     float attackCooldown = 0;
     float maxHealCooldown = 250;
@@ -72,8 +84,9 @@ public class Character : MonoBehaviour
 
     float desiredRotation = 0f;
 
-    Aim aimbar;
+    Aim[] aimbars;
     [SerializeField] GameObject[] projectiles;
+    Bullet[] bullets;
 
     HealthBar healthBar;
     AmmoBar ammoBar;
@@ -114,22 +127,32 @@ public class Character : MonoBehaviour
         ammo = maxAmmo;
 
         _rigidBody = GetComponentInParent<Rigidbody2D>();
-        collider = GetComponentInParent<BoxCollider2D>();
         sprite = GetComponentInParent<SpriteRenderer>();
         circle = GetComponentInChildren<Circle>();
         ogColor = sprite.color;
 
         ChangeCharacter();
-        aimbar = GetComponentInChildren<Aim>();
-        aimbar.ChangeAimBar(new Vector3(attackRange * 2f, attackWidth, 1));
-        aimbar.gameObject.SetActive(false);
+        aimbars = new Aim[2];
+        foreach (Aim aimbar in GetComponentsInChildren<Aim>())
+        {
+            aimbars[aimbar.GetPiece()] = aimbar;
+        }
+        aimbars[0].SetRange(attackRange, attackType, attackWidth);
+        aimbars[1].SetRange(attackRange, attackType, attackWidth);
+        if (attackType == -1)
+            aimbars[0].ChangeAimBar(new Vector3(attackRange * 2f, 0.1f, 1));
+        else
+            aimbars[0].ChangeAimBar(new Vector3(attackLength + attackRange * 2f, attackWidth, 1));
+        aimbars[0].gameObject.SetActive(false);
+        aimbars[1].gameObject.SetActive(false);
         healthBar = GetComponentInChildren<HealthBar>();
         ammoBar = GetComponentInChildren<AmmoBar>();
         scores = FindObjectsOfType<Scores>();
-
+        bullets = new Bullet[projectiles.Length];
         for (int i = 0; i < projectiles.Length; i++)
         {
-            projectiles[i].GetComponent<Bullet>().SetProjectile(attackRange, attackWidth, attackSpeed, attackDamage, attackType);
+            bullets[i] = projectiles[i].GetComponent<Bullet>();
+            bullets[i].SetProjectile(attackRange, attackWidth, attackLength, attackSpeed, attackDamage, attackType, lobbySelection.Selections[playerNum - 1], ghost, splash, attackLinger, followThrough, offset);
             projectiles[i].tag = "team" + team;
         }
 
@@ -151,7 +174,10 @@ public class Character : MonoBehaviour
             started = true;
         }
         if (died)
-            Respawn();
+        {
+            Respawning();
+            return;
+        }
         if (invulnerable > 0)
             Invulnerable();
 
@@ -194,7 +220,7 @@ public class Character : MonoBehaviour
             ammo += reloadSpeed * Time.deltaTime;
             ammoBar.reSize(ammo / maxAmmo);
         }
-
+        Shoot();
     }
 
     void Update()
@@ -228,16 +254,20 @@ public class Character : MonoBehaviour
             if (!RTrig)
             {
                 RTrig = true;
-                aimbar.gameObject.SetActive(true);
+                aimbars[0].gameObject.SetActive(true);
+                if (attackType == -1)
+                    aimbars[1].gameObject.SetActive(true);
             }
-            aimbar.transform.position = _rigidBody.position;
+            aimbars[0].transform.position = _rigidBody.position;
+            aimbars[1].transform.position = _rigidBody.position + attackRange * new Vector2(Input.GetAxis(RS_h), Input.GetAxis(RS_v));
         }
         else
         {
             if (RTrig)
             {
                 RTrig = false;
-                aimbar.gameObject.SetActive(false);
+                aimbars[0].gameObject.SetActive(false);
+                aimbars[1].gameObject.SetActive(false);
             }
         }
 
@@ -250,15 +280,33 @@ public class Character : MonoBehaviour
 
     }
 
-    public void Attack(Vector2 angle)
+    public void Attack(Vector2 _angle)
     {
         if (attackCooldown > 0) return;
         if (ammo < 1) return;
         ammo -= 1f;
         healCooldown = maxHealCooldown;
         attackCooldown = maxAttackCooldown;
-        projectiles[RotateAmmo()].GetComponent<Bullet>().Shoot(_rigidBody.position, angle, playerNum);
+        bulletsToShoot = numProjectiles;
+        burstTimer = 0;
+        angle = _angle;
+    }
 
+    void Shoot()
+    {
+        if (bulletsToShoot > 0)
+        {
+            if (burstTimer > 0)
+            {
+                burstTimer -= Time.deltaTime;
+            }
+            else
+            {
+                bullets[RotateAmmo()].Shoot(_rigidBody.position, angle, playerNum);
+                burstTimer = burst;
+                bulletsToShoot -= 1;
+            }
+        }
     }
 
     public void GetHit(int damage, int shooter)
@@ -323,6 +371,11 @@ public class Character : MonoBehaviour
         return new int[][] { kills, damageDealt, new int[] { deaths }, new int[] { (int)centreControl } };
     }
 
+    public Vector2[] getSpawns()
+    {
+        return spawnPoints;
+    }
+
     public void setPlayerNum(int num)
     {
         playerNum = num;
@@ -331,13 +384,20 @@ public class Character : MonoBehaviour
     public void Die()
     {
         died = true;
-        gameObject.SetActive(false);
-
+        transform.position = 2 * spawnPoints[Random.Range(0, 1)];
+        respawnTimer = 3f;
+        if (attackType == 0)
+        {
+            foreach (Bullet bullet in bullets)
+            {
+                bullet.EndProjectile();
+            }
+        }
     }
 
     public float[] GatherInfo(Character character)
     {
-        float[] playerInfo = new float[12];
+        float[] playerInfo = new float[15];
         if (character.playerNum == playerNum)
         {
             playerInfo[0] = _rigidBody.position.x / 10;
@@ -354,12 +414,25 @@ public class Character : MonoBehaviour
         playerInfo[5] = attackDamage / 10000;
         playerInfo[6] = attackRange / 20;
         playerInfo[7] = attackType;
-        playerInfo[8] = movementSpeed / 5;
-        playerInfo[9] = died ? -1 : ((invulnerability > 0) ? 0 : 1);
-        playerInfo[10] = bounty;
-        playerInfo[11] = (team == 1) ? 1 : -1;
+        playerInfo[8] = attackWidth / 5;
+        playerInfo[9] = movementSpeed / 5;
+        playerInfo[10] = splash ? 1 : -1;
+        playerInfo[11] = ghost ? 1 : -1;
+        playerInfo[12] = died ? -1 : ((invulnerability > 0) ? 0 : 1);
+        playerInfo[13] = bounty;
+        playerInfo[14] = (team == 1) ? 1 : -1;
 
         return playerInfo;
+    }
+
+
+    void Respawning()
+    {
+        respawnTimer -= Time.deltaTime;
+        if (respawnTimer <= 0)
+        {
+            Respawn();
+        }
     }
 
     void Respawn()
@@ -439,7 +512,10 @@ public class Character : MonoBehaviour
         if (team > 0)
             circle.changeColour(teamColours[team - 1]);
         if (i == 4)
+        {
             i = (int)(Random.value * 4);
+            lobbySelection.Selections[playerNum - 1] = i;
+        }
         if (i == 0)
             BlueBug();
         else if (i == 1)
@@ -473,7 +549,8 @@ public class Character : MonoBehaviour
         movementSpeed = 3;
         maxHealth = 3800;
         attackRange = 5;
-        attackWidth = 1;
+        attackWidth = 2f;
+        attackLength = 2f;
         attackSpeed = 6;
         maxAmmo = 3;
         maxAttackCooldown = 0.2f;
@@ -481,7 +558,15 @@ public class Character : MonoBehaviour
         attackDamage = 2000;
         attackCooldown = 0;
         maxHealCooldown = 3;
-        attackType = 1;
+        attackType = -1;
+        numProjectiles = 1;
+        ghost = true;
+        splash = true;
+        superChargeRate = 0.25f;
+        attackLinger = 1;
+        burst = 0;
+        followThrough = true;
+        offset = 0.2f;
     }
 
     private void PurpleDragon()
@@ -490,15 +575,24 @@ public class Character : MonoBehaviour
         movementSpeed = 3;
         maxHealth = 5400;
         attackRange = 7;
-        attackWidth = 1;
+        attackWidth = 0.9f;
+        attackLength = 0.5f;
         attackSpeed = 4;
         maxAmmo = 3;
         maxAttackCooldown = 0.4f;
         reloadSpeed = 0.8f;
-        attackDamage = 3200;
+        attackDamage = 1200;
         attackCooldown = 0;
         maxHealCooldown = 3;
         attackType = 1;
+        numProjectiles = 3;
+        ghost = false;
+        splash = false;
+        superChargeRate = 0.2f;
+        attackLinger = 0;
+        burst = 0.1f;
+        followThrough = false;
+        offset = 0.2f;
     }
 
     private void Dinosaur()
@@ -506,16 +600,25 @@ public class Character : MonoBehaviour
         sprite.sprite = characterSprites[2];
         movementSpeed = 3;
         maxHealth = 7000;
-        attackRange = 2;
-        attackWidth = 1;
-        attackSpeed = 5;
+        attackRange = 0.5f;
+        attackWidth = 2f;
+        attackLength = 1.2f;
+        attackSpeed = 1f;
         maxAmmo = 3;
         maxAttackCooldown = 0.3f;
         reloadSpeed = 0.6f;
         attackDamage = 3000;
         attackCooldown = 0;
         maxHealCooldown = 3;
-        attackType = 1;
+        attackType = 0;
+        numProjectiles = 1;
+        ghost = true;
+        splash = true;
+        superChargeRate = 0.2f;
+        attackLinger = 0;
+        burst = 0;
+        followThrough = true;
+        offset = 0;
     }
 
     private void Kangaroo()
@@ -523,16 +626,25 @@ public class Character : MonoBehaviour
         sprite.sprite = characterSprites[3];
         movementSpeed = 3;
         maxHealth = 5800;
-        attackRange = 3;
-        attackWidth = 1;
-        attackSpeed = 6;
+        attackRange = 1.5f;
+        attackWidth = 1.2f;
+        attackLength = 1.2f;
+        attackSpeed = 3f;
         maxAmmo = 3;
         maxAttackCooldown = 0.3f;
         reloadSpeed = 1;
-        attackDamage = 2500;
+        attackDamage = 1500;
         attackCooldown = 0;
         maxHealCooldown = 3;
         attackType = 0;
+        numProjectiles = 2;
+        ghost = false;
+        splash = false;
+        superChargeRate = 0.4f;
+        attackLinger = 0;
+        burst = 0.2f;
+        followThrough = true;
+        offset = 0.2f;
     }
 
 

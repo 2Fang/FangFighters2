@@ -10,9 +10,11 @@ public class LobbySO : ScriptableObject
     [SerializeField] private int[] team;
     [SerializeField] private int[] bots;
     [SerializeField] private int[] botModes;
-    [SerializeField] private string map;
+    [SerializeField] private int map;
     [SerializeField] private int player;
     [SerializeField] private int trialNo;
+    [SerializeField] private int batch;
+    [SerializeField] private int batchSize;
 
     public int[] Selections
     {
@@ -38,7 +40,7 @@ public class LobbySO : ScriptableObject
         set { botModes = value; }
     }
 
-    public string Map
+    public int Map
     {
         get { return map; }
         set { map = value; }
@@ -54,6 +56,18 @@ public class LobbySO : ScriptableObject
     {
         get { return trialNo; }
         set { trialNo = value; }
+    }
+
+    public int BatchNo
+    {
+        get { return batch; }
+        set { batch = value; }
+    }
+
+    public int BatchSize
+    {
+        get { return batchSize; }
+        set { batchSize = value; }
     }
 
 }
