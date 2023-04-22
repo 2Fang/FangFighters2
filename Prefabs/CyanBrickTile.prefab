@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 287691577953749753}
   - component: {fileID: 7443358157596792765}
   - component: {fileID: 6908464674297665425}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: CyanBrickTile
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

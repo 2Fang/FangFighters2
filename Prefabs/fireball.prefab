@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 671545681613182142}
   - component: {fileID: 6115687818989870411}
-  - component: {fileID: 2432909676784681300}
   - component: {fileID: -1754301585727697608}
   - component: {fileID: 4703112439925787540}
-  - component: {fileID: 3223838237077363710}
+  - component: {fileID: 4574980303058287431}
+  - component: {fileID: 6751099836099618554}
   m_Layer: 0
   m_Name: fireball
   m_TagString: Untagged
@@ -31,7 +31,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -3.75, y: 0.25, z: 0}
   m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
-  m_ConstrainProportionsScale: 1
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -88,54 +88,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!60 &2432909676784681300
-PolygonCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3541479266680514293}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.2, y: 0.66}
-    newSize: {x: 0.83, y: 1.53}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: 0.59999996, y: -0.11}
-      - {x: 0.59999996, y: 0.11}
-      - {x: 0.58, y: 0.16}
-      - {x: 0.45, y: 0.32}
-      - {x: 0.39, y: 0.32999998}
-      - {x: -0.11, y: 0.32999998}
-      - {x: -0.21, y: 0.31}
-      - {x: -0.44, y: 0.25}
-      - {x: -0.47, y: 0.19}
-      - {x: -0.37, y: 0.12}
-      - {x: -0.59999996, y: 0.07}
-      - {x: -0.59999996, y: -0.01}
-      - {x: -0.48, y: -0.06}
-      - {x: -0.41, y: -0.17}
-      - {x: -0.37, y: -0.22}
-      - {x: -0.32999998, y: -0.24}
-      - {x: -0.29999998, y: -0.26999998}
-      - {x: 0.02, y: -0.32}
-      - {x: 0.19, y: -0.32999998}
-      - {x: 0.32999998, y: -0.32999998}
-      - {x: 0.39999998, y: -0.29999998}
-      - {x: 0.45999998, y: -0.26999998}
-      - {x: 0.59, y: -0.14999999}
 --- !u!114 &-1754301585727697608
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -148,8 +100,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3aa89632f720cd478c628cd2e69f93d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 1800
-  offset: 0.2
+  projectileSprites:
+  - {fileID: 21300000, guid: 4bc6d9d5c4ae12c448997bc4833cea2d, type: 3}
+  - {fileID: 21300000, guid: 54d5763aa3ca8294096dc6b4eed82efb, type: 3}
+  - {fileID: 21300000, guid: 69e046061f8c2f646ad2b6d401a53fea, type: 3}
+  - {fileID: 21300000, guid: 61a80c8e3aee0924d82bd34165a949ee, type: 3}
+  triggerSprites:
+  - {fileID: 21300000, guid: 57a500e9688e525459be793e681e897b, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!50 &4703112439925787540
 Rigidbody2D:
   serializedVersion: 4
@@ -171,7 +131,23 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!95 &3223838237077363710
+--- !u!70 &4574980303058287431
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3541479266680514293}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_Size: {x: 1.2499325, y: 1.0219927}
+  m_Direction: 1
+--- !u!95 &6751099836099618554
 Animator:
   serializedVersion: 4
   m_ObjectHideFlags: 0
